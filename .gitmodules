@@ -1,0 +1,9 @@
+[submodule "3rdParty/edat"]
+	path = 3rdParty/edat
+	url = git@github.com:AlexanderPolyakov/edat.git
+[submodule "3rdParty/eecs"]
+	path = 3rdParty/eecs
+	url = git@github.com:AlexanderPolyakov/eecs.git
+[submodule "3rdParty/raylib"]
+	path = 3rdParty/raylib
+	url = git@github.com:raysan5/raylib.git
