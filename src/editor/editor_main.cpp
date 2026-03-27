@@ -83,13 +83,8 @@ int main(int argc, char** argv)
         registries["default"] = reg;
     }
 
-    Music mus = LoadMusicStream("res/audio/music/You Can't Beat the Machine - OPL Loop.ogg");
-    PlayMusicStream(mus);
-    SetMusicVolume(mus, 0.5f);
-
     while (!WindowShouldClose())
     {
-        UpdateMusicStream(mus);
         pre_draw_call(*reg);
             begin_cam(*reg);
                 eecs::step(*reg);
@@ -112,7 +107,6 @@ int main(int argc, char** argv)
         }
         assert(reg);
     }
-    UnloadMusicStream(mus);
     CloseAudioDevice();
 
     for ( auto r : registries )
