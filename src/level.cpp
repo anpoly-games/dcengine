@@ -37,23 +37,21 @@ void register_level(eecs::Registry& reg)
         .set(COMPID(std::set<vec3i>, level_zWalls), {})
         .set(COMPID(std::set<vec3i>, level_floors), {});
 
-    std::vector<eecs::EntityId> floors = load_prefabs_from_file(reg, "res/prefabs/floors.edat");
-    std::vector<eecs::EntityId> walls = load_prefabs_from_file(reg, "res/prefabs/walls.edat");
-    std::vector<eecs::EntityId> doors = load_prefabs_from_file(reg, "res/prefabs/doors.edat");
-    std::vector<eecs::EntityId> columns = load_prefabs_from_file(reg, "res/prefabs/columns.edat");
-    std::vector<eecs::EntityId> ceilings = load_prefabs_from_file(reg, "res/prefabs/ceilings.edat");
-    std::vector<eecs::EntityId> entities = load_prefabs_from_file(reg, "res/prefabs/entities.edat");
-    std::vector<eecs::EntityId> logic = load_prefabs_from_file(reg, "res/prefabs/logic.edat");
-    std::vector<eecs::EntityId> billboards = load_prefabs_from_file(reg, "res/prefabs/billboards.edat");
+    edat::ParserSuite psuite;
+    psuite.addLambdaParser<std::string>("path", [](const std::string_view& str) -> std::string { return std::string(str); });
 
-    eecs::create_entity_wrap(reg, "floors").set(COMPID(std::vector<eecs::EntityId>, children), floors);
-    eecs::create_entity_wrap(reg, "walls").set(COMPID(std::vector<eecs::EntityId>, children), walls);
-    eecs::create_entity_wrap(reg, "doors").set(COMPID(std::vector<eecs::EntityId>, children), doors);
-    eecs::create_entity_wrap(reg, "columns").set(COMPID(std::vector<eecs::EntityId>, children), columns);
-    eecs::create_entity_wrap(reg, "ceilings").set(COMPID(std::vector<eecs::EntityId>, children), ceilings);
-    eecs::create_entity_wrap(reg, "entities").set(COMPID(std::vector<eecs::EntityId>, children), entities);
-    eecs::create_entity_wrap(reg, "logic").set(COMPID(std::vector<eecs::EntityId>, children), logic);
-    eecs::create_entity_wrap(reg, "billboards").set(COMPID(std::vector<eecs::EntityId>, children), billboards);
+    fs::path fnPath = "res/prefabs_list.edat";
+    fs::path fullPath = fs::current_path() / fnPath;
+    edat::Table prefabsTable = edat::parseFile(fullPath, psuite);
+
+    std::vector<eecs::EntityId> prefabTypes;
+    prefabsTable.getAll<std::string>([&](const std::string& name, const std::string& value)
+    {
+        std::vector<eecs::EntityId> prefabs = load_prefabs_from_file(reg, value);
+        eecs::EntityWrap prefabsParent = eecs::create_entity_wrap(reg, name.c_str()).set(COMPID(std::vector<eecs::EntityId>, children), prefabs);
+        prefabTypes.push_back(prefabsParent.eid);
+    });
+    eecs::create_entity_wrap(reg).set(COMPID(std::vector<eecs::EntityId>, prefabs_typeList), prefabTypes);
 
     static auto find_door_wall_coords = [](const vec3f& pos, float rot)
     {

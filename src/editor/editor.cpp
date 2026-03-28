@@ -352,7 +352,7 @@ void register_editor(eecs::Registry& reg)
                 }
             }
         }, COMPID(eecs::EntityId, selectedEntity), COMPID(const std::string, selectedPrefab));
-        eecs::query_entities(reg, [&](eecs::EntityId eid, EntTypeList selectedType, const std::string& selectedPrefab)
+        eecs::query_entities(reg, [&](eecs::EntityId eid, const std::string& selectedType, const std::string& selectedPrefab)
         {
             if (selectedPrefab.empty())
                 return;
@@ -368,10 +368,10 @@ void register_editor(eecs::Registry& reg)
                 const vec3f insideTilePos = intersection - tilePos;
                 constexpr float threshold = 0.3f;
                 static int dirAtPress = -1;
-                if ((selectedType == E_WALLS || selectedType == E_DOORS || selectedType == E_BILLBOARDS) && (fabsf(insideTilePos.x) > threshold || fabsf(insideTilePos.z) > threshold))
+                if ((selectedType == "walls" || selectedType == "doors" || selectedType == "billboards") && (fabsf(insideTilePos.x) > threshold || fabsf(insideTilePos.z) > threshold))
                 {
                     int dir = fabsf(insideTilePos.x) > threshold ? 1 : 0;
-                    if (selectedType != E_BILLBOARDS)
+                    if (selectedType != "billboards")
                     {
                         if (dir == 1)
                         {
@@ -405,17 +405,17 @@ void register_editor(eecs::Registry& reg)
                         delete_wall(reg, tilePos, dir);
                         delete_door(reg, tilePos, dir);
                         delete_billboard(reg, tilePos, dir);
-                        if (selectedType == E_WALLS || selectedType == E_BILLBOARDS)
+                        if (selectedType == "walls" || selectedType == "billboards")
                         {
                             vec2f hzDir = vec2f(sinf(dir * PI / 2), cosf(dir * PI / 2));
                             vec2f pos2d = vec2f(wx - (dir ? 0.5f : 0.f), wy - (dir ? 0.f : 0.5f));
                             vec2f cam2dDir = pos2d - vec2f(camera.position.x, camera.position.z);
-                            if (selectedType == E_WALLS)
+                            if (selectedType == "walls")
                                 create_wall(reg, tilePos, dir, hzDir.dot(cam2dDir) < 0, selectedPrefab.c_str());
                             else
                                 create_billboard(reg, tilePos, dir, hzDir.dot(cam2dDir) < 0, selectedPrefab.c_str());
                         }
-                        else if (selectedType == E_DOORS)
+                        else if (selectedType == "doors")
                             create_door(reg, tilePos, dir, selectedPrefab.c_str());
                     }
                     if (IsMouseButtonReleased(1))
@@ -425,7 +425,7 @@ void register_editor(eecs::Registry& reg)
                         delete_billboard(reg, tilePos, dir);
                     }
                 }
-                if (selectedType == E_FLOORS)
+                if (selectedType == "floors")
                 {
                     DrawCube(castRLVec3(tilePos), 1.f, 0.05f, 1.f, Color{255, 255, 0, 150});
                     if (IsMouseButtonDown(0))
@@ -436,19 +436,19 @@ void register_editor(eecs::Registry& reg)
                     if (IsMouseButtonReleased(1))
                         delete_floor(reg, tilePos);
                 }
-                if (selectedType == E_ENTITIES)
+                if (selectedType == "entities")
                 {
                     DrawCube(castRLVec3(tilePos), 1.f, 0.05f, 1.f, Color{255, 255, 0, 150});
                     if (IsMouseButtonReleased(0))
                         create_entity(reg, tilePos, camRot, selectedPrefab.c_str());
                 }
-                if (selectedType == E_LOGIC)
+                if (selectedType == "logic")
                 {
                     DrawCube(castRLVec3(tilePos), 1.f, 0.05f, 1.f, Color{255, 255, 0, 150});
                     if (IsMouseButtonReleased(0))
                         create_logic(reg, tilePos, camRot, selectedPrefab.c_str());
                 }
-                if (selectedType == E_COLUMNS)
+                if (selectedType == "columns")
                 {
                     vec3f tpos = tilePos + vec3f(sign(insideTilePos.x) * 0.5f, 0.5f, sign(insideTilePos.z) * 0.5f);
                     DrawCube(castRLVec3(tpos), 0.13f, 1.f, 0.13f, Color{255, 255, 0, 150});
@@ -469,7 +469,7 @@ void register_editor(eecs::Registry& reg)
                 int wx = floorf(intersection.x + 0.5f);
                 int wy = floorf(intersection.z + 0.5f);
                 vec3f tilePos = vec3f(floorf(intersection.x + 0.5f), plFloor + 1.f, floorf(intersection.z + 0.5f));
-                if (selectedType == E_CEILINGS)
+                if (selectedType == "ceilings")
                 {
                     DrawCube(castRLVec3(tilePos), 1.f, 0.05f, 1.f, Color{255, 255, 0, 150});
                     if (IsMouseButtonDown(0))
@@ -481,7 +481,7 @@ void register_editor(eecs::Registry& reg)
                         delete_ceiling(reg, tilePos);
                 }
             }
-        }, COMPID(const EntTypeList, selectedType), COMPID(const std::string, selectedPrefab));
+        }, COMPID(const std::string, selectedType), COMPID(const std::string, selectedPrefab));
     }, COMPID(const Camera, camera));
     eecs::reg_system(reg, [&](eecs::EntityId eid, const Camera& camera)
       {
@@ -526,7 +526,7 @@ void register_editor(eecs::Registry& reg)
       }, COMPID(const Camera, camera));
 
     eecs::create_entity_wrap(reg)
-        .set(COMPID(EntTypeList, selectedType), E_FLOORS)
+        .set(COMPID(std::string, selectedType), std::string{"floors"})
         .set(COMPID(std::string, selectedPrefab), std::string())
         .set(COMPID(eecs::EntityId, selectedEntity), eecs::invalid_eid);
 }

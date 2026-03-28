@@ -20,7 +20,7 @@ enum EditorState
   E_SAVE_SELECT
 };
 
-static EntTypeList entType = E_FLOORS;
+static std::string entType = "floors";
 static EditorState editorState = E_WORLD;
 static std::string editorLevelName = "";
 static std::string editorLevelToLoad = "";
@@ -36,43 +36,48 @@ static void draw_right_editor_panel(eecs::Registry& reg, float width, float heig
     DrawRectangle(left, top, width * 0.3f, height, Color{100, 100, 100, 200});
     const float lpad = 4 * scaleFactor;
     const float vpad = lpad;
-    const char* types[E_ETL_NUM] = {"floors", "walls", "doors", "columns", "ceilings", "entities", "logic", "billboards"};
 
     const Vector2 mp = GetMousePosition();
 
     float xtabpos = left + lpad;
     float ytabpos = top + vpad;
-    for (int i = 0; i < E_ETL_NUM; ++i)
+    eecs::query_entities(reg, [&](eecs::EntityId, const std::vector<eecs::EntityId>& prefabs_typeList)
     {
-        const float hsize = 100 * scaleFactor;
-        const float hspacing = 4 * scaleFactor;
-        Color col = entType == i ? selectedColor : notSelectedColor;
-        Rectangle rect = torect(xtabpos, ytabpos, hsize, 16 * scaleFactor);
-        if (is_vec_in_rect(mp, rect))
+        for (const eecs::EntityId& eid : prefabs_typeList)
         {
-            Vector3 hsv = ColorToHSV(col);
-            col = ColorFromHSV(hsv.x, hsv.y, std::min(1.f, hsv.z + 0.3f));
-            if (IsMouseButtonReleased(0))
+            eecs::entity_name(reg, eid, [&](const std::string& name)
             {
-                if (entType != i)
+                const float hsize = 100 * scaleFactor;
+                const float hspacing = 4 * scaleFactor;
+                Color col = entType == name ? selectedColor : notSelectedColor;
+                Rectangle rect = torect(xtabpos, ytabpos, hsize, 16 * scaleFactor);
+                if (is_vec_in_rect(mp, rect))
                 {
-                    eecs::query_entities(reg, [&](eecs::EntityId, EntTypeList& selectedType, std::string& selectedPrefab)
-                            {
-                                selectedPrefab = ""; selectedType = (EntTypeList)i;
-                            }, COMPID(EntTypeList, selectedType), COMPID(std::string, selectedPrefab));
+                    Vector3 hsv = ColorToHSV(col);
+                    col = ColorFromHSV(hsv.x, hsv.y, std::min(1.f, hsv.z + 0.3f));
+                    if (IsMouseButtonReleased(0))
+                    {
+                        if (entType != name)
+                        {
+                            eecs::query_entities(reg, [&](eecs::EntityId, std::string& selectedType, std::string& selectedPrefab)
+                                    {
+                                        selectedPrefab = ""; selectedType = name;
+                                    }, COMPID(std::string, selectedType), COMPID(std::string, selectedPrefab));
+                        }
+                        entType = name;
+                    }
                 }
-                entType = (EntTypeList)i;
-            }
+                DrawRectangleRec(rect, col);
+                DrawText(name.c_str(), rect.x + lpad, rect.y, 16 * scaleFactor, WHITE);
+                xtabpos += hsize + hspacing;
+                if (xtabpos > width - (hsize + hspacing))
+                {
+                    xtabpos = left + lpad;
+                    ytabpos += 16 * scaleFactor + hspacing;
+                }
+            });
         }
-        DrawRectangleRec(rect, col);
-        DrawText(types[i], rect.x + lpad, rect.y, 16 * scaleFactor, WHITE);
-        xtabpos += hsize + hspacing;
-        if (xtabpos > width - (hsize + hspacing))
-        {
-            xtabpos = left + lpad;
-            ytabpos += 16 * scaleFactor + hspacing;
-        }
-    }
+    }, COMPID(const std::vector<eecs::EntityId>, prefabs_typeList));
 
     const float vspacing = 2 * scaleFactor;
     const float hspacing = 4 * scaleFactor;
@@ -82,7 +87,7 @@ static void draw_right_editor_panel(eecs::Registry& reg, float width, float heig
 
     static std::string filter;
 
-    eecs::EntityWrap type = eecs::find_entity_wrap(reg, types[entType]);
+    eecs::EntityWrap type = eecs::find_entity_wrap(reg, entType.c_str());
     eecs::query_component(reg, type.eid, [&](const std::vector<eecs::EntityId>& children)
     {
         const float filterWd = 50.f * scaleFactor;
