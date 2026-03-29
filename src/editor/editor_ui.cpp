@@ -47,8 +47,15 @@ static void draw_right_editor_panel(eecs::Registry& reg, float width, float heig
         {
             eecs::entity_name(reg, eid, [&](const std::string& name)
             {
+                if (!name.empty() && name[0] == '_')
+                    return;
                 const float hsize = 100 * scaleFactor;
                 const float hspacing = 4 * scaleFactor;
+                if (xtabpos > width - (hsize + hspacing))
+                {
+                    xtabpos = left + lpad;
+                    ytabpos += 16 * scaleFactor + hspacing;
+                }
                 Color col = entType == name ? selectedColor : notSelectedColor;
                 Rectangle rect = torect(xtabpos, ytabpos, hsize, 16 * scaleFactor);
                 if (is_vec_in_rect(mp, rect))
@@ -70,11 +77,6 @@ static void draw_right_editor_panel(eecs::Registry& reg, float width, float heig
                 DrawRectangleRec(rect, col);
                 DrawText(name.c_str(), rect.x + lpad, rect.y, 16 * scaleFactor, WHITE);
                 xtabpos += hsize + hspacing;
-                if (xtabpos > width - (hsize + hspacing))
-                {
-                    xtabpos = left + lpad;
-                    ytabpos += 16 * scaleFactor + hspacing;
-                }
             });
         }
     }, COMPID(const std::vector<eecs::EntityId>, prefabs_typeList));
