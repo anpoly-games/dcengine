@@ -227,6 +227,7 @@ void register_primitives(eecs::Registry& reg)
     eecs::reg_enter(reg, [&](eecs::EntityId eid, Model& model, const Texture2D& texture_diff)
     {
         SetMaterialTexture(&model.materials[0], MATERIAL_MAP_DIFFUSE, texture_diff);
+        SetMaterialTexture(&model.materials[0], MATERIAL_MAP_ALBEDO, texture_diff);
     }, COMPID(Model, model), COMPID(const Texture2D, texture_diff));
     eecs::reg_enter(reg, [&](eecs::EntityId eid, Model& model, const Texture2D& texture_emissive)
     {
