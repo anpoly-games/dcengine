@@ -145,6 +145,8 @@ eecs::Registry* change_level(eecs::Registry& reg, std::unordered_map<std::string
             {
                 eecs::Registry* nReg = registries[nextLevel];
                 assert(nReg);
+                // TODO: move to game specific code via an event or something?
+                /*
                 const char* compsToCopy[] =
                 {
                     "attr_strength", "attr_agility", "attr_mind", "attr_body",
@@ -162,6 +164,7 @@ eecs::Registry* change_level(eecs::Registry& reg, std::unordered_map<std::string
                         }
                     }, COMPID(Tag, player));
                 }, COMPID(Tag, player));
+                */
                 eecs::create_entity_wrap(*nReg).set(COMPID(float, timeFromLevelChange), 0.5f);
                 /*
                 eecs::query_entities(*nReg, [&](eecs::EntityId eid, const vec3f& pos, const float rot, Tag spawn){
