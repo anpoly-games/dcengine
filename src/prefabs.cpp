@@ -21,10 +21,24 @@ std::vector<eecs::EntityId> load_entities_from_file(eecs::Registry& reg, const s
     {
         return eecs::create_or_find_entity(reg, std::string(str).c_str());
     });
+    psuite.addLambdaParser<eecs::EntityId>("eid_inst", [&](const std::string_view& str) -> eecs::EntityId
+    {
+        return eecs::create_entity_wrap(reg)
+            .set(COMPID(std::string, prefab), std::string(str)).eid;
+    });
 
     fs::path enemies = filename;
     fs::path fullPath = fs::current_path() / enemies;
     edat::Table entitiesTable = edat::parseFile(fullPath, psuite);
+
+    auto processPrefab = [&](eecs::EntityId eid)
+    {
+        eecs::query_component(reg, eid, [&](std::string& prefab)
+        {
+            eecs::EntityId prefabEid = eecs::find_entity(reg, prefab.c_str());
+            eecs::copy_from_prefab(reg, prefabEid, eid);
+        }, COMPID(std::string, prefab));
+    };
 
     entitiesTable.getAll<edat::Table>([&](const std::string& name, const edat::Table& tbl)
     {
@@ -43,11 +57,11 @@ std::vector<eecs::EntityId> load_entities_from_file(eecs::Registry& reg, const s
         });
         tbl.getAll<std::vector<float>>([&](const std::string& compName, const std::vector<float>& val)
         {
-            if (val.size() == 2) // Vector2
+            if (val.size() == 2) // vec2f
                 entity.set(eecs::comp_id<vec2f>(compName.c_str()), vec2f{val[0], val[1]});
-            else if (val.size() == 3) // Vector3
+            else if (val.size() == 3) // vec3f
                 entity.set(eecs::comp_id<vec3f>(compName.c_str()), vec3f{val[0], val[1], val[2]});
-            else if (val.size() == 4) // Vector4
+            else if (val.size() == 4) // vec4f
                 entity.set(eecs::comp_id<vec4f>(compName.c_str()), vec4f{val[0], val[1], val[2], val[3]});
         });
         tbl.getAll<std::vector<int>>([&](const std::string& compName, const std::vector<int>& val)
@@ -66,10 +80,13 @@ std::vector<eecs::EntityId> load_entities_from_file(eecs::Registry& reg, const s
         tbl.getAll<eecs::EntityId>([&](const std::string& compName, eecs::EntityId val)
         {
             entity.set(eecs::comp_id<eecs::EntityId>(compName.c_str()), val);
+            processPrefab(val);
         });
         tbl.getAll<std::vector<eecs::EntityId>>([&](const std::string& compName, const std::vector<eecs::EntityId>& val)
         {
             entity.set(eecs::comp_id<std::vector<eecs::EntityId>>(compName.c_str()), val);
+            for (eecs::EntityId eid : val)
+                processPrefab(eid);
         });
         tbl.getAll<std::vector<std::string>>([&](const std::string& compName, const std::vector<std::string>& val)
         {
@@ -80,12 +97,7 @@ std::vector<eecs::EntityId> load_entities_from_file(eecs::Registry& reg, const s
             entity.set(eecs::comp_id<std::string>(compName.c_str()), val);
         });
 
-        eecs::query_component(reg, entity.eid, [&, eid=entity.eid](std::string& name)
-        {
-            eecs::EntityId prefab_id = eecs::find_entity(reg, name.c_str());
-            eecs::copy_from_prefab(reg, prefab_id, eid);
-        },
-        COMPID(std::string, prefab));
+        processPrefab(entity.eid);
         res.push_back(entity.eid);
     });
 
