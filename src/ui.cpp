@@ -138,9 +138,9 @@ NineRect create_9rect(Image img, int sz)
   res.rects[4] = LoadTextureFromImage(ImageFromImage(img, torect(sz, sz, img.width - 2 * sz, img.height - 2 * sz)));
   res.rects[5] = LoadTextureFromImage(ImageFromImage(img, torect(img.width - sz, sz, sz, img.height - 2 * sz)));
 
-  res.rects[6] = LoadTextureFromImage(ImageFromImage(img, torect(0, img.width - sz, sz, sz)));
-  res.rects[7] = LoadTextureFromImage(ImageFromImage(img, torect(sz, img.width - sz, img.width - 2 * sz, sz)));
-  res.rects[8] = LoadTextureFromImage(ImageFromImage(img, torect(img.width - sz, img.width - sz, sz, sz)));
+  res.rects[6] = LoadTextureFromImage(ImageFromImage(img, torect(0, img.height - sz, sz, sz)));
+  res.rects[7] = LoadTextureFromImage(ImageFromImage(img, torect(sz, img.height - sz, img.width - 2 * sz, sz)));
+  res.rects[8] = LoadTextureFromImage(ImageFromImage(img, torect(img.width - sz, img.height - sz, sz, sz)));
 
   for (Texture2D& tex : res.rects)
   {
