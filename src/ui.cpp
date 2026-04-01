@@ -13,19 +13,25 @@ void draw_centered_texture(Texture2D tex, Rectangle rect, float scale)
   DrawTextureEx(tex, pos, 0.f, scale, WHITE);
 }
 
-void draw_font_with_shadow(Font font, const char* text, float x, float y, float size, int spacing, Color col)
+void draw_font_with_shadow(Font font, const char* text, float x, float y, float size, int spacing, Color col, int thickness)
 {
   Color shadowC = BLACK;
   shadowC.a = col.a;
-  DrawTextEx(font, text, tovec(x - 1, y - 1), size, spacing, shadowC);
-  DrawTextEx(font, text, tovec(x + 1, y + 1), size, spacing, shadowC);
-  DrawTextEx(font, text, tovec(x - 1, y + 1), size, spacing, shadowC);
-  DrawTextEx(font, text, tovec(x + 1, y - 1), size, spacing, shadowC);
 
-  DrawTextEx(font, text, tovec(x - 1, y), size, spacing, shadowC);
-  DrawTextEx(font, text, tovec(x + 1, y), size, spacing, shadowC);
-  DrawTextEx(font, text, tovec(x, y + 1), size, spacing, shadowC);
-  DrawTextEx(font, text, tovec(x, y - 1), size, spacing, shadowC);
+  for (int dx = -thickness; dx <= thickness; dx++)
+  {
+      for (int dy = -thickness; dy <= thickness; dy++)
+      {
+          if (dx == 0 && dy == 0)
+              continue;
+
+          // circle-ish mask (looks better than square)
+          if (dx*dx + dy*dy > thickness*thickness)
+              continue;
+
+          DrawTextEx(font, text, tovec(x + dx, y + dy), size, spacing, shadowC);
+      }
+  }
 
   DrawTextEx(font, text, tovec(x, y), size, spacing, col);
 }
@@ -67,12 +73,12 @@ float draw_bounded_font_with_shadow(Font font, const char* text, float x, float 
   return ypos + size + pad;
 }
 
-void draw_centered_font_with_shadow(Font font, const char* text, Rectangle rect, float size, int spacing, Color col, FontCentering fc)
+void draw_centered_font_with_shadow(Font font, const char* text, Rectangle rect, float size, int spacing, Color col, FontCentering fc, int thickness)
 {
   const bool vcenter = fc & EFC_VCENTER;
   const bool hcenter = fc & EFC_HCENTER;
   Vector2 sz = MeasureTextEx(font, text, size, spacing);
-  draw_font_with_shadow(font, text, rect.x + (hcenter ? (rect.width - sz.x) * 0.5f : 0), rect.y + (vcenter ? (rect.height - sz.y) * 0.5f : 0), size, spacing, col);
+  draw_font_with_shadow(font, text, rect.x + (hcenter ? (rect.width - sz.x) * 0.5f : 0), rect.y + (vcenter ? (rect.height - sz.y) * 0.5f : 0), size, spacing, col, thickness);
 }
 
 void draw_centered_block_with_shadow(Font font, int num, const char** text, Rectangle rect, float size, int spacing, Color col)
