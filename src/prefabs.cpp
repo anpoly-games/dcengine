@@ -1,6 +1,7 @@
 #include <eecs.h>
 #include <edat.h>
 #include <parsers.h>
+#include <utility>
 #include "dcengine/prefabs.h"
 #include "dcengine/tags.h"
 #include "dcengine/math.h"
@@ -19,12 +20,36 @@ std::vector<eecs::EntityId> load_entities_from_file(eecs::Registry& reg, const s
     psuite.addLambdaParser<bool>("bool", [](const std::string_view& str) -> bool { return str == "true"; });
     psuite.addLambdaParser<eecs::EntityId>("eid", [&](const std::string_view& str) -> eecs::EntityId
     {
-        return eecs::create_or_find_entity(reg, std::string(str).c_str());
+        return str.empty() ? eecs::invalid_eid : eecs::create_or_find_entity(reg, std::string(str).c_str());
     });
     psuite.addLambdaParser<eecs::EntityId>("eid_inst", [&](const std::string_view& str) -> eecs::EntityId
     {
         return eecs::create_entity_wrap(reg)
             .set(COMPID(std::string, prefab), std::string(str)).eid;
+    });
+    psuite.addLambdaParser<std::pair<eecs::EntityId, float>>("eid_float", [&](const std::string_view& str) -> std::pair<eecs::EntityId, float>
+    {
+        size_t separator = str.find(':');
+        if (separator == std::string_view::npos)
+        {
+            return std::make_pair(eecs::create_or_find_entity(reg, std::string(str).c_str()), 0.f);
+        }
+        else
+        {
+            return std::make_pair(eecs::create_or_find_entity(reg, std::string(str.substr(0, separator)).c_str()), std::stof(std::string(str.substr(separator+1))));
+        }
+    });
+    psuite.addLambdaParser<std::pair<eecs::EntityId, int>>("eid_int", [&](const std::string_view& str) -> std::pair<eecs::EntityId, int>
+    {
+        size_t separator = str.find(':');
+        if (separator == std::string_view::npos)
+        {
+            return std::make_pair(eecs::create_or_find_entity(reg, std::string(str).c_str()), 0);
+        }
+        else
+        {
+            return std::make_pair(eecs::create_or_find_entity(reg, std::string(str.substr(0, separator)).c_str()), std::stoi(std::string(str.substr(separator+1))));
+        }
     });
 
     fs::path enemies = filename;
@@ -95,6 +120,22 @@ std::vector<eecs::EntityId> load_entities_from_file(eecs::Registry& reg, const s
         tbl.getAll<std::string>([&](const std::string& compName, const std::string& val)
         {
             entity.set(eecs::comp_id<std::string>(compName.c_str()), val);
+        });
+        tbl.getAll<std::pair<eecs::EntityId, float>>([&](const std::string& compName, const std::pair<eecs::EntityId, float>& val)
+        {
+            entity.set(eecs::comp_id<std::pair<eecs::EntityId, float>>(compName.c_str()), val);
+        });
+        tbl.getAll<std::vector<std::pair<eecs::EntityId, float>>>([&](const std::string& compName, const std::vector<std::pair<eecs::EntityId, float>>& val)
+        {
+            entity.set(eecs::comp_id<std::vector<std::pair<eecs::EntityId, float>>>(compName.c_str()), val);
+        });
+        tbl.getAll<std::pair<eecs::EntityId, int>>([&](const std::string& compName, const std::pair<eecs::EntityId, int>& val)
+        {
+            entity.set(eecs::comp_id<std::pair<eecs::EntityId, int>>(compName.c_str()), val);
+        });
+        tbl.getAll<std::vector<std::pair<eecs::EntityId, int>>>([&](const std::string& compName, const std::vector<std::pair<eecs::EntityId, int>>& val)
+        {
+            entity.set(eecs::comp_id<std::vector<std::pair<eecs::EntityId, int>>>(compName.c_str()), val);
         });
 
         processPrefab(entity.eid);
