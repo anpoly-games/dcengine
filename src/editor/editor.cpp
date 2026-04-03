@@ -524,6 +524,10 @@ void save_level(eecs::Registry& reg, const char* filename)
     fullPath += filename;
     std::string edat = "";
     eecs::ComponentHandlers handlers;
+    handlers.addTypeHandler<bool>([&](const std::string_view& view, bool val)
+    {
+        edat += std::string("    ") + std::string(view) + " : bool = \"" + (val ? "true" : "false") + "\"\n";
+    });
     handlers.addTypeHandler<float>([&](const std::string_view& view, float val)
     {
         edat += std::string("    ") + std::string(view) + " : float = \"" + std::to_string(val) + "\"\n";
