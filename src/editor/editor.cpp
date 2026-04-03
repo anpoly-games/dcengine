@@ -67,6 +67,7 @@ void create_door(eecs::Registry& reg, vec3f tilePos, int dir, const char* name);
 void create_billboard(eecs::Registry& reg, vec3f tilePos, int dir, bool flip, const char* name);
 void create_column(eecs::Registry& reg, vec3f tilePos, const char* name);
 void create_entity(eecs::Registry& reg, vec3f tilePos, float rot, const char* name);
+void create_beam(eecs::Registry& reg, vec3f tilePos, int dir, const char* name);
 
 void delete_floor(eecs::Registry& reg, vec3f tilePos);
 void delete_ceiling(eecs::Registry& reg, vec3f tilePos);
@@ -74,6 +75,7 @@ void delete_wall(eecs::Registry& reg, vec3f tilePos, int dir);
 void delete_door(eecs::Registry& reg, vec3f tilePos, int dir);
 void delete_billboard(eecs::Registry& reg, vec3f tilePos, int dir);
 void delete_column(eecs::Registry& reg, vec3f tilePos);
+void delete_beam(eecs::Registry& reg, vec3f tilePos, int dir);
 
 Vector3 Vector3Rotate(Vector3 v, Matrix mat)
 {
@@ -432,15 +434,13 @@ void register_editor(eecs::Registry& reg)
                 {
                     vec3f tpos = tilePos + vec3f(sign(insideTilePos.x) * 0.5f, 0.5f, sign(insideTilePos.z) * 0.5f);
                     DrawCube(castRLVec3(tpos), 0.13f, 1.f, 0.13f, Color{255, 255, 0, 150});
-                    int cx = tilePos.x + (insideTilePos.x > 0 ? 1 : 0);
-                    int cy = tilePos.z + (insideTilePos.z > 0 ? 1 : 0);
                     if (IsMouseButtonReleased(0))
                     {
-                        delete_column(reg, tilePos);
-                        create_column(reg, tilePos, selectedPrefab.c_str());
+                        delete_column(reg, tpos);
+                        create_column(reg, tpos, selectedPrefab.c_str());
                     }
                     if (IsMouseButtonReleased(1))
-                        delete_column(reg, tilePos);
+                        delete_column(reg, tpos);
                 }
                 else
                 {
@@ -455,6 +455,7 @@ void register_editor(eecs::Registry& reg)
                 int wx = floorf(intersection.x + 0.5f);
                 int wy = floorf(intersection.z + 0.5f);
                 vec3f tilePos = vec3f(floorf(intersection.x + 0.5f), plFloor + 1.f, floorf(intersection.z + 0.5f));
+                const vec3f insideTilePos = intersection - tilePos;
                 if (selectedType == "ceilings")
                 {
                     DrawCube(castRLVec3(tilePos), 1.f, 0.05f, 1.f, Color{255, 255, 0, 150});
@@ -465,6 +466,21 @@ void register_editor(eecs::Registry& reg)
                     }
                     if (IsMouseButtonReleased(1))
                         delete_ceiling(reg, tilePos);
+                }
+                else if (selectedType == "beams")
+                {
+                    bool horz = fabsf(insideTilePos.z) < fabsf(insideTilePos.x);
+                    vec3f tpos = tilePos + vec3f(horz ? sign(insideTilePos.x) : 0.f, 0.f, horz ? 0.f : sign(insideTilePos.z)) * 0.5f;
+                    DrawCube(castRLVec3(tpos), horz ? 0.13f : 1.f, 0.13f, horz ? 1.f : 0.13f, Color{255, 255, 0, 150});
+                    int dir = horz ? 0 : 1;
+                    //DrawCube(castRLVec3(tilePos), 0.1f, 0.5f, 0.1f, Color{255, 255, 255, 150});
+                    if (IsMouseButtonReleased(0))
+                    {
+                        delete_beam(reg, tpos, dir);
+                        create_beam(reg, tpos, dir, selectedPrefab.c_str());
+                    }
+                    if (IsMouseButtonReleased(1))
+                        delete_beam(reg, tpos, dir);
                 }
             }
         }, COMPID(const std::string, selectedType), COMPID(const std::string, selectedPrefab));
@@ -704,9 +720,20 @@ void create_column(eecs::Registry& reg, vec3f tilePos, const char* name)
         .tag(COMPID(Tag, Column))
         .tag(COMPID(Tag, Saveable))
         .set(COMPID(float, rotation), 0.f)
-        .set(COMPID(vec3f, position), {tilePos.x - 0.5f, tilePos.y + 0.5f, tilePos.z - 0.5f})
+        .set(COMPID(vec3f, position), {tilePos.x, tilePos.y, tilePos.z})
         .set(COMPID(std::string, prefab), std::string(name));
 }
+
+void create_beam(eecs::Registry& reg, vec3f tilePos, int dir, const char* name)
+{
+    eecs::create_wrap_from_prefab(reg, eecs::find_entity(reg, name))
+        .tag(COMPID(Tag, Beam))
+        .tag(COMPID(Tag, Saveable))
+        .set(COMPID(float, rotation), dir * 90.f)
+        .set(COMPID(vec3f, position), {tilePos.x, tilePos.y, tilePos.z})
+        .set(COMPID(std::string, prefab), std::string(name));
+}
+
 
 void delete_floor(eecs::Registry& reg, vec3f tilePos)
 {
@@ -764,10 +791,20 @@ void delete_column(eecs::Registry& reg, vec3f tilePos)
 {
     eecs::query_entities(reg, [&](eecs::EntityId eid, const vec3f& position, Tag Column)
     {
-        if (position.x == tilePos.x - 0.5f && position.y == tilePos.y + 0.5f && position.z == tilePos.z - 0.5f)
+        if (position.x == tilePos.x && position.y == tilePos.y && position.z == tilePos.z)
             eecs::del_entity(reg, eid);
     }, COMPID(const vec3f, position), COMPID(const Tag, Column));
 }
+
+void delete_beam(eecs::Registry& reg, vec3f tilePos, int dir)
+{
+    eecs::query_entities(reg, [&](eecs::EntityId eid, const vec3f& position, Tag Beam)
+    {
+        if (position.x == tilePos.x && position.y == tilePos.y && position.z == tilePos.z)
+            eecs::del_entity(reg, eid);
+    }, COMPID(const vec3f, position), COMPID(const Tag, Column));
+}
+
 
 void set_game_state(GameState gs) {}
 

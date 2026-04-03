@@ -50,7 +50,7 @@ static void fix_cube_coords(Mesh& mesh, const vec3f& tcMult)
     for (int i = 0; i < 8 * 2 * 1; ++i)
         texcoords[i] *= i % 2 ? tcMult.y : tcMult.x;
     for (int i = 8 * 2 * 1; i < 8 * 2 * 2; ++i)
-        texcoords[i] *= i % 2 ? tcMult.x : tcMult.z;
+        texcoords[i] *= i % 2 ? tcMult.z : tcMult.x;
     for (int i = 8 * 2 * 2; i < 8 * 2 * 3; ++i)
         texcoords[i] *= i % 2 ? tcMult.y : tcMult.z;
     memcpy(mesh.texcoords, texcoords, 24*2*sizeof(float));
