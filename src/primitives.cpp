@@ -11,31 +11,37 @@ static void fix_cube_coords(Mesh& mesh, const vec3f& tcMult)
   if (mesh.texcoords != nullptr)
   {
     float texcoords[] = {
+        // +z
         1.0f, 1.0f,
         0.0f, 1.0f,
         0.0f, 0.0f,
         1.0f, 0.0f,
 
+        // -z
         1.0f, 1.0f,
         1.0f, 0.0f,
         0.0f, 0.0f,
         0.0f, 1.0f,
 
+        // +y
         0.0f, 0.0f,
         0.0f, 1.0f,
         1.0f, 1.0f,
         1.0f, 0.0f,
 
+        // -y
         0.0f, 1.0f,
         1.0f, 1.0f,
         1.0f, 0.0f,
         0.0f, 0.0f,
 
+        // +x
         0.0f, 1.0f,
         0.0f, 0.0f,
         1.0f, 0.0f,
         1.0f, 1.0f,
 
+        // -x
         0.0f, 1.0f,
         1.0f, 1.0f,
         1.0f, 0.0f,
@@ -46,7 +52,7 @@ static void fix_cube_coords(Mesh& mesh, const vec3f& tcMult)
     for (int i = 8 * 2 * 1; i < 8 * 2 * 2; ++i)
         texcoords[i] *= i % 2 ? tcMult.x : tcMult.z;
     for (int i = 8 * 2 * 2; i < 8 * 2 * 3; ++i)
-        texcoords[i] *= i % 2 ? tcMult.z : tcMult.y;
+        texcoords[i] *= i % 2 ? tcMult.y : tcMult.z;
     memcpy(mesh.texcoords, texcoords, 24*2*sizeof(float));
     UpdateMeshBuffer(mesh, SHADER_LOC_VERTEX_TEXCOORD01, mesh.texcoords, sizeof(float) * 2 * mesh.vertexCount, 0);
   }
