@@ -3,7 +3,7 @@
 #include <eecs.h>
 #include <algorithm>
 #include <string>
-
+#include <cstring>
 #include "dcengine/ui.h"
 #include "dcengine/math.h"
 
