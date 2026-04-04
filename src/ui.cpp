@@ -12,6 +12,79 @@ void draw_centered_texture(Texture2D tex, Rectangle rect, float scale)
   Vector2 pos = Vector2{rect.x + (rect.width - tex.width * scale) * 0.5f, rect.y + (rect.height - tex.height * scale) * 0.5f};
   DrawTextureEx(tex, pos, 0.f, scale, WHITE);
 }
+struct ColorPairs
+{
+    const char* cmd;
+    Color col;
+};
+const ColorPairs colorPairs[] =
+{
+    {"~red~", RED},
+    {"~green~", GREEN},
+    {"~blue~", BLUE},
+    {"~clear~", WHITE}
+};
+
+std::string clear_text_from_color_commands(const char* text)
+{
+    std::string buffer;
+    const char* start = text;
+    const char* cursor = text;
+    for (const char *cursor = start; *cursor != '\0'; ++cursor)
+    {
+        if (*cursor == '~')
+        {
+            if (cursor != start)
+            {
+                std::string prevStr = std::string(start, cursor - start);
+                buffer += prevStr;
+            }
+            // process the command
+            for (ColorPairs cp : colorPairs)
+            {
+                const int len = strlen(cp.cmd);
+                if (strncmp(cursor, cp.cmd, len) == 0)
+                {
+                    cursor += len;
+                    start = cursor;
+                }
+            }
+        }
+    }
+    buffer += start;
+    return buffer;
+}
+
+void draw_colored_font(Font font, const char* text, float x, float y, float size, int spacing, Color tint)
+{
+    const char* start = text;
+    Color curColor = tint;
+    const char* cursor = text;
+    for (const char *cursor = start; *cursor != '\0'; ++cursor)
+    {
+        if (*cursor == '~')
+        {
+            if (cursor != start)
+            {
+                std::string prevStr = std::string(start, cursor - start);
+                DrawTextEx(font, prevStr.c_str(), tovec(x, y), size, spacing, curColor);
+                x += MeasureTextEx(font, prevStr.c_str(), size, spacing).x + spacing;
+            }
+            // process the command
+            for (ColorPairs cp : colorPairs)
+            {
+                const int len = strlen(cp.cmd);
+                if (strncmp(cursor, cp.cmd, len) == 0)
+                {
+                    curColor = ColorTint(tint, cp.col);
+                    cursor += len;
+                    start = cursor;
+                }
+            }
+        }
+    }
+    DrawTextEx(font, start, tovec(x, y), size, spacing, curColor);
+}
 
 void draw_font_with_shadow(Font font, const char* text, float x, float y, float size, int spacing, Color col, int thickness)
 {
@@ -29,11 +102,13 @@ void draw_font_with_shadow(Font font, const char* text, float x, float y, float 
           if (dx*dx + dy*dy > thickness*thickness)
               continue;
 
-          DrawTextEx(font, text, tovec(x + dx, y + dy), size, spacing, shadowC);
+          draw_colored_font(font, text, x + dx, y + dy, size, spacing, shadowC);
+          //DrawTextEx(font, text, tovec(x + dx, y + dy), size, spacing, shadowC);
       }
   }
 
-  DrawTextEx(font, text, tovec(x, y), size, spacing, col);
+  draw_colored_font(font, text, x, y, size, spacing, col);
+  //DrawTextEx(font, text, tovec(x, y), size, spacing, col);
 }
 
 float draw_bounded_font_with_shadow(Font font, const char* text, float x, float y, float width, float size, int spacing, float pad, Color col)
@@ -77,7 +152,8 @@ void draw_centered_font_with_shadow(Font font, const char* text, Rectangle rect,
 {
   const bool vcenter = fc & EFC_VCENTER;
   const bool hcenter = fc & EFC_HCENTER;
-  Vector2 sz = MeasureTextEx(font, text, size, spacing);
+  std::string str = clear_text_from_color_commands(text);
+  Vector2 sz = MeasureTextEx(font, str.c_str(), size, spacing);
   draw_font_with_shadow(font, text, rect.x + (hcenter ? (rect.width - sz.x) * 0.5f : 0), rect.y + (vcenter ? (rect.height - sz.y) * 0.5f : 0), size, spacing, col, thickness);
 }
 
@@ -87,7 +163,10 @@ void draw_centered_block_with_shadow(Font font, int num, const char** text, Rect
   const float lineHt = sz.y;
   float vstart = rect.y + (rect.height - lineHt * num) * 0.5f;
   for (int i = 0; i < num; ++i)
-    draw_centered_font_with_shadow(font, text[i], torect(rect.x, vstart + lineHt * i, rect.width, lineHt), size, spacing, col);
+  {
+      std::string str = clear_text_from_color_commands(text[i]);
+      draw_centered_font_with_shadow(font, str.c_str(), torect(rect.x, vstart + lineHt * i, rect.width, lineHt), size, spacing, col);
+  }
 }
 
 void draw_button(Rectangle rect, const char* text, float scaleFactor, Color col)
