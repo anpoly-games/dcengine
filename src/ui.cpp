@@ -123,7 +123,7 @@ float draw_bounded_font_with_shadow(Font font, const char* text, float x, float 
     if (next == std::string::npos)
     {
       std::string sub = str.substr(start) + " ";
-      Vector2 sz = MeasureTextEx(font, sub.c_str(), size, spacing);
+      Vector2 sz = MeasureTextEx(font, clear_text_from_color_commands(sub.c_str()).c_str(), size, spacing);
       if (xpos + sz.x > width)
       {
         xpos = x;
@@ -134,7 +134,7 @@ float draw_bounded_font_with_shadow(Font font, const char* text, float x, float 
       break;
     }
     std::string sub = str.substr(start, next - start) + " ";
-    Vector2 sz = MeasureTextEx(font, sub.c_str(), size, spacing);
+    Vector2 sz = MeasureTextEx(font, clear_text_from_color_commands(sub.c_str()).c_str(), size, spacing);
     if (xpos + sz.x > width)
     {
       xpos = x;
