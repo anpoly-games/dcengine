@@ -602,12 +602,13 @@ void save_level(eecs::Registry& reg, const char* filename)
 
     handlers.addTypeHandler<eecs::EntityId>([&](const std::string_view& view, eecs::EntityId eid)
     {
-        edat += std::string("    ") + std::string(view) + " : eid = ";
         eecs::entity_name(reg, eid, [&](const std::string& name)
         {
+            edat += std::string("    ") + std::string(view) + " : eid = ";
             edat += std::string("\"") + name + "\"";
+            edat += std::string("\n");
         });
-        edat += std::string("\n");
+        // Otherwise it's an inst and we don't care
     });
 
     handlers.addTypeHandler<std::vector<eecs::EntityId>>([&](const std::string_view& view, const std::vector<eecs::EntityId>& val)
