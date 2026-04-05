@@ -1,6 +1,7 @@
 #include <raylib.h>
 #include <eecs.h>
 #include <algorithm>
+#include <cmath>
 #include <random>
 #include <cstring>
 
@@ -22,6 +23,8 @@
 static Shader lightingShader;
 static Light lights[MAX_LIGHTS];
 static Shader billboardShader;
+static int deathProgressLoc = -1;
+static float cachedDeathProgress = -1.f;
 
 void register_renderer(eecs::Registry& reg)
 {
@@ -29,6 +32,7 @@ void register_renderer(eecs::Registry& reg)
                                TextFormat("res/shaders/glsl%i/lighting.fs", GLSL_VERSION));
     lightingShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(lightingShader, "viewPos");
     lightingShader.locs[SHADER_LOC_MAP_EMISSION] = GetShaderLocation(lightingShader, "emissiveMap");
+    deathProgressLoc = GetShaderLocation(lightingShader, "deathProgress");
 
     billboardShader = LoadShader(NULL, TextFormat("res/shaders/glsl%i/billboardShader.fs", GLSL_VERSION));
 
@@ -87,6 +91,21 @@ void register_renderer(eecs::Registry& reg)
         eecs::query_entities(reg, [&](eecs::EntityId eid, Model& model, const vec3f& position)
         {
             model.materials[0].shader = lightingShader;
+
+            float deathProgress = 0.f;
+            const float deathTimer = eecs::get_comp_or(reg, eid, COMPID(float, death_timer), -1.f);
+            if (deathTimer >= 0.f)
+            {
+                const float deathDuration = std::max(eecs::get_comp_or(reg, eid, COMPID(float, death_duration), 1.f), 0.0001f);
+                deathProgress = std::clamp(deathTimer / deathDuration, 0.f, 1.f);
+            }
+
+            if (deathProgressLoc >= 0 && std::fabs(deathProgress - cachedDeathProgress) > 0.0001f)
+            {
+                SetShaderValue(lightingShader, deathProgressLoc, &deathProgress, SHADER_UNIFORM_FLOAT);
+                cachedDeathProgress = deathProgress;
+            }
+
             vec3f moffs = eecs::get_comp_or(reg, eid, COMPID(vec3f, modelOffs), vec3f(0,0,0));
             DrawModelEx(model, toRLVec3(position + moffs), Vector3{0.f, 1.f, 0.f}, eecs::get_comp_or(reg, eid, COMPID(float, rotation), 0.f), Vector3{1.f, 1.f, 1.f}, WHITE);
         }, COMPID(Model, model), COMPID(const vec3f, position));
