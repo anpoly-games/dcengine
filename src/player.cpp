@@ -1,5 +1,6 @@
 #include <raylib.h>
 #include <eecs.h>
+#include <random>
 
 #include "dcengine/player.h"
 #include "dcengine/tags.h"
@@ -41,6 +42,10 @@ void register_player(eecs::Registry& reg)
                 if (check_collision_dir(reg, position, mdir2d) || !check_floor(reg, position + mdir) || check_occupancy(reg, position + mdir))
                     return;
                 // align back to grid
+                std::random_device rd;
+                std::mt19937 gen(rd());
+                std::uniform_real_distribution<> dis(0.85, 1.15);
+                SetSoundPitch(stepSnd, dis(gen));
                 PlaySound(stepSnd);
                 vec2i gridPos = pos_to_grid(position);
                 position = vec3f(gridPos.x, floorf(position.y + 0.5f), gridPos.y);
