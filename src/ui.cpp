@@ -22,6 +22,7 @@ const ColorPairs colorPairs[] =
     {"~red~", RED},
     {"~green~", GREEN},
     {"~blue~", BLUE},
+    {"~gray~", GRAY},
     {"~clear~", WHITE}
 };
 
