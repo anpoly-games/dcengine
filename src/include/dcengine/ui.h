@@ -14,6 +14,7 @@ enum FontCentering
 };
 
 void draw_font_with_shadow(Font font, const char* text, float x, float y, float size, int spacing, Color col, int thickness = 1);
+void draw_colored_font(Font font, const char* text, float x, float y, float size, int spacing, Color tint);
 float draw_bounded_font_with_shadow(Font font, const char* text, float x, float y, float width, float size, int spacing, float pad, Color col);
 void draw_centered_font_with_shadow(Font font, const char* text, Rectangle rect, float size, int spacing, Color col, FontCentering fc = FontCentering(EFC_HCENTER | EFC_VCENTER), int thickness = 1);
 void draw_centered_block_with_shadow(Font font, int num, const char** text, Rectangle rect, float size, int spacing, Color col);
